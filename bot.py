@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from time import sleep
 from threading import Thread
-from typing import Dict
+from typing import Dict, List
 
 from telegram import Bot
 from telegram.constants import ParseMode
@@ -44,28 +44,29 @@ def _get_node_name() -> str:
     return node.strip()
 
 
-async def _send_telegram_message(node: str, data: Dict) -> None:
+async def _send_telegram_message(node: str, data: List[Dict]) -> None:
     '''
     Send message for telegram CHAT.
     '''
-    # Fix logout date if exists.
-    try:
-        dt = datetime.fromisoformat(data['logout'])
-        dt = dt.astimezone(timezone(timedelta(hours=-3)))
-        out = dt.strftime('%d/%m/%Y %H:%M:%S')
-    except:
-        out = 'Permanece logado'
+    message = f"<b>Atualização de login na máquina {node}</b>\n"
 
-    # Create HTML message to send.
-    message = (
-        f"<b>Atualização de login na máquina {node}</b>\n"
-        f"<code>Usuário</code>: {html.escape(str(data['user']))}\n"
-        f"<code>TTY</code>: {html.escape(str(data['tty']))}\n"
-        f"<code>IP</code>: {html.escape(str(data['hostname']))}\n"
-        f"<code>Serviço</code>: {html.escape(str(data['service']))}\n"
-        f"<code>Entrada</code>: {html.escape(str(data['login']))}\n"
-        f"<code>Saída</code>: {html.escape(str(out))}"
-    )
+    for line in data:
+        # Fix logout date if exists.
+        try:
+            dt = datetime.fromisoformat(line['logout'])
+            dt = dt.astimezone(timezone(timedelta(hours=-3)))
+            out = dt.strftime('%d/%m/%Y %H:%M:%S')
+        except:
+            out = 'Permanece logado'
+
+        # Create HTML message to send.
+        message += f"\n<code>Usuário</code>: {html.escape(str(line['user']))}\n" \
+            f"<code>TTY</code>: {html.escape(str(line['tty']))}\n" \
+            f"<code>IP</code>: {html.escape(str(line['hostname']))}\n" \
+            f"<code>Serviço</code>: {html.escape(str(line['service']))}\n" \
+            f"<code>Entrada</code>: {html.escape(str(line['login']))}\n" \
+            f"<code>Saída</code>: {html.escape(str(out))}" \
+            "\n\n--\n"
 
     # Send messagem with BOT.
     async with Bot(TOKEN) as bot:
@@ -139,13 +140,10 @@ def analyse_data() -> None:
             dt = datetime.fromisoformat(item['login'])
             dt = dt.astimezone(tz=timezone(timedelta(hours=-3)))
             data[idx]['login'] = dt.strftime('%d/%m/%Y %H:%M:%S')
-   
 
-        # Ordenate by last login date.
-        ordened = sorted(data, key=lambda x: x['login'], reverse=True)
-        _log(f'New login in {_get_node_name()}\n{ordened[0]}')
+        _log(f'New login in {_get_node_name()}\n{data}')
         # Send to Telegram.
-        asyncio.run(_send_telegram_message(_get_node_name(), ordened[0]))
+        asyncio.run(_send_telegram_message(_get_node_name(), data))
 
 
 if __name__ == '__main__':
