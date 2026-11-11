@@ -2,6 +2,7 @@ import html
 import os
 import asyncio
 import json
+import logging
 import subprocess
 from queue import Queue, Empty
 from datetime import datetime, timedelta, timezone
@@ -19,13 +20,6 @@ CHAT_ID = int(os.environ['TELEGRAM_CHAT_ID'])
 queue = Queue()
 
 
-def _log(text) -> None:
-    '''
-    Print message log with date time
-    '''
-    print(f'[ {datetime.now().isoformat()} ] -> {text}')
-
-
 def _get_node_name() -> str:
     '''
     Get machine name
@@ -37,7 +31,7 @@ def _get_node_name() -> str:
     )
 
     if response.returncode != 0:
-        _log('Cannot get machine node name!')
+        logging.error(response.stderr)
         return 'Unknow'
 
     node = response.stdout
@@ -89,11 +83,11 @@ def get_data() -> None:
         )
 
         if response.returncode != 0:
-            _log(response.stderr)
+            logging.error(response.stderr)
             sleep(60.0)
             continue
 
-        _log('Command [ /usr/bin/last ] run successfully!')
+        logging.info('Command [ /usr/bin/last ] run successfully!')
         # Convert data to bytes
         data = response.stdout.encode()
         # Send data to process queue.
@@ -114,7 +108,7 @@ def analyse_data() -> None:
             # Get content to be analysed.
             content = queue.get_nowait()
         except Empty:
-            _log('Queue is empty!')
+            logging.debug('Queue is empty!')
             sleep(5.0)
             continue
 
@@ -123,7 +117,7 @@ def analyse_data() -> None:
 
         # Same hash means "No new login MTF".
         if new == old:
-            _log('Not new loggin on server!')
+            logging.info('Not new loggin on server!')
             sleep(5.0)
             continue
 
@@ -141,13 +135,13 @@ def analyse_data() -> None:
             dt = dt.astimezone(tz=timezone(timedelta(hours=-3)))
             data[idx]['login'] = dt.strftime('%d/%m/%Y %H:%M:%S')
 
-        _log(f'New login in {_get_node_name()}\n{data}')
+        logging.warning(f'New login in {_get_node_name()}\n{data}')
         # Send to Telegram.
         asyncio.run(_send_telegram_message(_get_node_name(), data))
 
 
 if __name__ == '__main__':
-    _log(f'Running in {_get_node_name()}')
+    print(f'Running in {_get_node_name()}')
     threads = [
         Thread(target=get_data),
         Thread(target=analyse_data)
