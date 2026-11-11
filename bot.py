@@ -83,7 +83,7 @@ def get_data() -> None:
     '''
     while True:
         response = subprocess.run(
-            ['/usr/bin/last', '-i', '-j', '-S', '-x', '-n', '5', '--time-format', 'iso'],
+            ['/usr/bin/last', '-i', '-j', '-S', '-x', '-n', '1', '--time-format', 'iso'],
             capture_output=True,
             text=True,
         )
