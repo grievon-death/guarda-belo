@@ -14,9 +14,9 @@ from typing import Dict, List
 from telegram import Bot
 from telegram.constants import ParseMode
 
+import settings
 
-TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
-CHAT_ID = int(os.environ['TELEGRAM_CHAT_ID'])
+
 queue = Queue()
 
 
@@ -63,9 +63,9 @@ async def _send_telegram_message(node: str, data: List[Dict]) -> None:
             "\n\n--\n"
 
     # Send messagem with BOT.
-    async with Bot(TOKEN) as bot:
+    async with Bot(settings.TOKEN) as bot:
         await bot.send_message(
-            chat_id=CHAT_ID,
+            chat_id=settings.CHAT_ID,
             text=message,
             parse_mode=ParseMode.HTML,
         )
