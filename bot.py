@@ -84,7 +84,7 @@ def get_data() -> None:
 
         if response.returncode != 0:
             logging.error(response.stderr)
-            sleep(60.0)
+            sleep(1.0)
             continue
 
         logging.info('Command [ /usr/bin/last ] run successfully!')
@@ -93,7 +93,7 @@ def get_data() -> None:
         # Send data to process queue.
         queue.put_nowait(data)
         # Wait a minute before try again.
-        sleep(60.0)
+        sleep(1.0)
 
 
 def analyse_data() -> None:
@@ -109,7 +109,7 @@ def analyse_data() -> None:
             content = queue.get_nowait()
         except Empty:
             logging.debug('Queue is empty!')
-            sleep(5.0)
+            sleep(0.5)
             continue
 
         # Create a hash from content.
@@ -118,7 +118,7 @@ def analyse_data() -> None:
         # Same hash means "No new login MTF".
         if new == old:
             logging.info('Not new loggin on server!')
-            sleep(5.0)
+            sleep(0.5)
             continue
 
         # Save new hash for future comparison.
