@@ -12,6 +12,7 @@ Atualmente ele conta com a função de informar login e logout de máquinas.
 
 - Python3.14
 - wtmpdb
+- iproute2
 
 ## Instalação
 

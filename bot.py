@@ -1,5 +1,3 @@
-import html
-import os
 import asyncio
 import json
 import logging
@@ -9,12 +7,8 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from time import sleep
 from threading import Thread
-from typing import Dict, List
 
-from telegram import Bot
-from telegram.constants import ParseMode
-
-import settings
+import services
 
 
 queue = Queue()
@@ -37,38 +31,6 @@ def _get_node_name() -> str:
     node = response.stdout
     return node.strip()
 
-
-async def _send_telegram_message(node: str, data: List[Dict]) -> None:
-    '''
-    Send message for telegram CHAT.
-    '''
-    message = f"<b>Atualização de login na máquina {node}</b>\n"
-
-    for line in data:
-        # Fix logout date if exists.
-        try:
-            dt = datetime.fromisoformat(line['logout'])
-            dt = dt.astimezone(timezone(timedelta(hours=-3)))
-            out = dt.strftime('%d/%m/%Y %H:%M:%S')
-        except:
-            out = 'Permanece logado'
-
-        # Create HTML message to send.
-        message += f"\n<code>Usuário</code>: {html.escape(str(line['user']))}\n" \
-            f"<code>TTY</code>: {html.escape(str(line['tty']))}\n" \
-            f"<code>IP</code>: {html.escape(str(line['hostname']))}\n" \
-            f"<code>Serviço</code>: {html.escape(str(line['service']))}\n" \
-            f"<code>Entrada</code>: {html.escape(str(line['login']))}\n" \
-            f"<code>Saída</code>: {html.escape(str(out))}" \
-            "\n\n--\n"
-
-    # Send messagem with BOT.
-    async with Bot(settings.TOKEN) as bot:
-        await bot.send_message(
-            chat_id=settings.CHAT_ID,
-            text=message,
-            parse_mode=ParseMode.HTML,
-        )
 
 
 def get_data() -> None:
@@ -137,7 +99,7 @@ def analyse_data() -> None:
 
         logging.warning(f'New login in {_get_node_name()}\n{data}')
         # Send to Telegram.
-        asyncio.run(_send_telegram_message(_get_node_name(), data))
+        asyncio.run(services.send_telegram_message(_get_node_name(), data))
 
 
 if __name__ == '__main__':
