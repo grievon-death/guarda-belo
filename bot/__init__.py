@@ -3,9 +3,7 @@ import asyncio
 import services
 
 
-def run() -> None:
-    tasks = asyncio.gather(
+async def run() -> None:
+    await asyncio.gather(
         services.watch_login(),
     )
-
-    asyncio.run(tasks)

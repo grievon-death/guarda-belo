@@ -1,12 +1,10 @@
-from ast import Dict
 import html
-from datetime import datetime, timedelta, timezone
-from typing import Dict
 
+import models
 import settings
 
 
-async def send_telegram_message(node: str, data: Dict) -> None:
+async def send_telegram_message(node: str, data: models.LastLogin) -> None:
     '''
     Send message for telegram CHAT.
     '''
@@ -14,22 +12,13 @@ async def send_telegram_message(node: str, data: Dict) -> None:
     from telegram.constants import ParseMode
 
     message = f"<b>Atualização de login na máquina {node}</b>\n"
-
-    # Fix logout date if exists.
-    try:
-        dt = datetime.fromisoformat(data['logout'])
-        dt = dt.astimezone(timezone(timedelta(hours=-3)))
-        out = dt.strftime('%d/%m/%Y %H:%M:%S')
-    except:
-        out = 'Permanece logado'
-
     # Create HTML message to send.
-    message += f"\n<code>Usuário</code>: {html.escape(str(data['user']))}\n" \
-        f"<code>TTY</code>: {html.escape(str(data['tty']))}\n" \
-        f"<code>IP</code>: {html.escape(str(data['hostname']))}\n" \
-        f"<code>Serviço</code>: {html.escape(str(data['service']))}\n" \
-        f"<code>Entrada</code>: {html.escape(str(data['login']))}\n" \
-        f"<code>Saída</code>: {html.escape(str(out))}" \
+    message += f"\n<code>Usuário</code>: {html.escape(str(data.user))}\n" \
+        f"<code>TTY</code>: {html.escape(str(data.tty))}\n" \
+        f"<code>IP</code>: {html.escape(str(data.hostname))}\n" \
+        f"<code>Serviço</code>: {html.escape(str(data.service))}\n" \
+        f"<code>Entrada</code>: {html.escape(str(data.login))}\n" \
+        f"<code>Saída</code>: {html.escape(str(data.logout))}" \
         "\n\n--\n"
 
     # Send messagem with BOT.
@@ -39,4 +28,3 @@ async def send_telegram_message(node: str, data: Dict) -> None:
             text=message,
             parse_mode=ParseMode.HTML,
         )
-
